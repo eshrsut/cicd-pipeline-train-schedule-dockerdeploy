@@ -9,31 +9,32 @@ pipeline {
             }
         }
         stage('Build Docker Image') {
-            when{
-            branch 'master'
+            when {
+                branch 'master'
             }
             steps {
                 script {
-                   app = docker.build("eshrsut/train-schedule")
+                    app = docker.build("qshrsut/train-schedule")
                     app.inside {
-                    sh 'echo $(curl localhost:8080)' 
+                        sh 'echo $(curl localhost:8080)'
+                    }
                 }
-             }
             }
-          stage('Push Docker Image'){
-            when{
-            branch 'master'
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
             }
             steps {
                 script {
-                    app = docker.withregistry ('https://registry.hub.docker.com', 'docker_hub_login'){
-                app.push("${env.BUILD_NUMBER}")
-                app.push(latest) 
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
                 }
-              }
             }
-          }
-     stage('DeployToProduction') {
+        }
+        stage('DeployToProduction') {
             when {
                 branch 'master'
             }
@@ -49,10 +50,10 @@ pipeline {
                         } catch (err) {
                             echo: 'caught error: $err'
                         }
-                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 8080:8080 -d willbla/train-schedule:${env.BUILD_NUMBER}\""
+                        sh "sshpass -p '$USERPASS' -v ssh -o StrictHostKeyChecking=no $USERNAME@$prod_ip \"docker run --restart always --name train-schedule -p 8080:8080 -d qshrsut/train-schedule:${env.BUILD_NUMBER}\""
                     }
                 }
             }
+        }
     }
- }
 }
